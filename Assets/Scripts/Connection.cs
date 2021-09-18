@@ -6,4 +6,8 @@ public class Connection : MonoBehaviour
 {
     public Transform In;
     public Transform Out;
+
+    void Start()
+    {
+    }
 }

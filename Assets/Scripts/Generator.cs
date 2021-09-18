@@ -15,7 +15,11 @@ public class Generator : MonoBehaviour
         // First add root node.
         Node rootNode = Instantiate(rootNodes[0].gameObject, new Vector3(0,0,0), Quaternion.identity).GetComponent<Node>();
         rootNode.gameObject.name = "Root";
-
+        // Set up root node physics.
+        Rigidbody rootBody = rootNode.gameObject.GetComponent<Rigidbody>();
+        rootBody.useGravity = false;
+        rootBody.mass = Mathf.Infinity;
+        
         // Add all connections of root node to the queue.
         // Use the queue for breadth first creation.
         Queue<Connection> allConnections = new Queue<Connection>();
@@ -23,19 +27,25 @@ public class Generator : MonoBehaviour
             allConnections.Enqueue(connection);
         }
 
+        Node currentNode;
         for(int i=0; i<nodeCount; i++) {
             // If no connection to dequeue, end.
             if(allConnections.Count == 0) {
                 break;
             }
 
+            // Pull connection from the queue and set our current node.
             Connection currentNodeConnection = allConnections.Dequeue();
-            Log("current node connection: " + currentNodeConnection.name);
+            currentNode = currentNodeConnection.transform.parent.gameObject.GetComponent<Node>();
+            Log("current node: " + currentNode.name);
+
+            Log("current node connection: " + currentNodeConnection.name + " of: " + currentNodeConnection.transform.parent.gameObject.name);
             Vector3 currentNodeConnectionPosition = currentNodeConnection.transform.position;
 
-            // Select next node to add. TODO: for now we just choose first node in list.
-            Node nextNode = Instantiate(nodes[0].gameObject, new Vector3(0,0,0), Quaternion.identity).GetComponent<Node>();
+            // Select next node to add.
+            Node nextNode = Instantiate(nodes[Random.Range(0, nodes.Count)].gameObject, new Vector3(0,0,0), Quaternion.identity).GetComponent<Node>();
             nextNode.gameObject.name = "Node " + i;
+            nextNode.enabled = false;
 
             // Choose a random connection point on the node we will add.
             Connection nextNodeConnection = nextNode.connections[Random.Range(0, nextNode.connections.Count)];
@@ -48,12 +58,30 @@ public class Generator : MonoBehaviour
             Quaternion rotation = Quaternion.FromToRotation(nextNodeConnection.Out.up, currentNodeConnection.In.up);
             QuaternionRotateAround(nextNode.gameObject.transform, currentNodeConnectionPosition, rotation);
 
+            // Add joint between the two nodes at the connection point.
+            CharacterJoint joint = currentNode.gameObject.AddComponent<CharacterJoint>();
+            joint.anchor = currentNodeConnection.transform.localPosition;
+            joint.connectedBody = nextNode.GetComponent<Rigidbody>();
+            joint.autoConfigureConnectedAnchor = false;
+            joint.connectedAnchor = nextNodeConnection.transform.localPosition;
+            joint.enableCollision = true;
+
             // Add connections that are NOT the current connection point to the queue.
             foreach(Connection c in nextNode.connections) {
                 if(c != nextNodeConnection) {
                     allConnections.Enqueue(c);
                 }
             }
+
+            nextNode.enabled = true;
+        }
+    }
+
+    void AddJoints(Node n) {
+        foreach(Connection connection in n.connections) {
+            CharacterJoint joint = n.gameObject.AddComponent<CharacterJoint>();
+            joint.anchor = connection.transform.localPosition;
+            joint.enableCollision = true;
         }
     }
 

@@ -156,7 +156,7 @@ MonoBehaviour:
   - {fileID: 4324244519969164419, guid: c2e7a177e8771874cb6a5804709d3955, type: 3}
   nodes:
   - {fileID: 4324244519969164419, guid: c2e7a177e8771874cb6a5804709d3955, type: 3}
-  nodeCount: 4
+  nodeCount: 30
   debug: 1
 --- !u!4 &1335269887
 Transform:
